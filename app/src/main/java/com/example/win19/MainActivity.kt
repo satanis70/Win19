@@ -1,12 +1,12 @@
 package com.example.win19
 
+import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import com.example.win19.databinding.ActivityMainBinding
 import com.example.win19.model.Question
-import com.example.win19.model.QuestionModel
 import com.example.win19.services.RetrofitService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,11 +18,29 @@ import retrofit2.converter.gson.GsonConverterFactory
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var questionList = ArrayList<Question>()
-    private val rightAnswer: String? = null
+    private var currentPosition = 0
+    private var score = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        getData()
+        binding.buttonNext.setOnClickListener {
+            binding.buttonAnswer1.setBackgroundResource(R.color.buttons)
+            binding.buttonAnswer2.setBackgroundResource(R.color.buttons)
+            binding.buttonAnswer3.setBackgroundResource(R.color.buttons)
+            binding.buttonAnswer4.setBackgroundResource(R.color.buttons)
+            getData()
+            if (currentPosition==questionList.size){
+                val intent = Intent(this, ScoreActivity::class.java)
+                intent.putExtra("score", score)
+                startActivity(intent)
+            }
+        }
+    }
+
+    private fun getData(){
+        questionList.clear()
         CoroutineScope(Dispatchers.IO).launch{
             val api = Retrofit.Builder()
                 .baseUrl("http://49.12.202.175/")
@@ -34,19 +52,91 @@ class MainActivity : AppCompatActivity() {
                 questionList.addAll(request.body()!!.questions)
                 CoroutineScope(Dispatchers.Main).launch {
                     Log.d("LIST", questionList.toString())
-                    showNextQuiz()
+                    binding.textViewScore.text = "${currentPosition+1}/${questionList.size}"
+                    showNextQuiz(currentPosition)
+                    currentPosition+=1
                 }
             }
         }
-
     }
 
-    fun showNextQuiz(){
-        binding.textViewQuestion.text = questionList[0].question
-        binding.buttonAnswer1.text = questionList[0].answer1.name
-        binding.buttonAnswer2.text = questionList[0].answer2.name
-        binding.buttonAnswer3.text = questionList[0].answer3.name
-        binding.buttonAnswer4.text = questionList[0].answer4.name
-    }
+    private fun showNextQuiz(currentPosition: Int) {
+        binding.textViewQuestion.text = questionList[currentPosition].question
+        val button1 = binding.buttonAnswer1
+        val button2 = binding.buttonAnswer2
+        val button3 = binding.buttonAnswer3
+        val button4 = binding.buttonAnswer4
+        val buttonNext = binding.buttonNext
+        button1.text = questionList[currentPosition].answer1.name
+        button2.text = questionList[currentPosition].answer2.name
+        button3.text = questionList[currentPosition].answer3.name
+        button4.text = questionList[currentPosition].answer4.name
 
+        button1.setOnClickListener {
+            if (questionList[currentPosition].answer1.trueorfalse=="true"){
+                button1.setBackgroundColor(Color.GREEN)
+                button2.isClickable = false
+                button3.isClickable = false
+                button4.isClickable = false
+                score+=1
+                buttonNext.isEnabled = true
+            } else {
+                button1.setBackgroundColor(Color.RED)
+                button2.isClickable = false
+                button3.isClickable = false
+                button4.isClickable = false
+                buttonNext.isEnabled = true
+            }
+        }
+        button2.setOnClickListener {
+            if (questionList[currentPosition].answer2.trueorfalse=="true"){
+                button1.isClickable = false
+                button2.setBackgroundColor(Color.GREEN)
+                button3.isClickable = false
+                button4.isClickable = false
+                score+=1
+                buttonNext.isEnabled = true
+            } else {
+                button1.isClickable = false
+                button2.setBackgroundColor(Color.RED)
+                button3.isClickable = false
+                button4.isClickable = false
+                buttonNext.isEnabled = true
+            }
+        }
+        button3.setOnClickListener {
+            if (questionList[currentPosition].answer3.trueorfalse=="true"){
+                button1.isClickable = false
+                button2.isClickable = false
+                button3.setBackgroundColor(Color.GREEN)
+                button4.isClickable = false
+                score+=1
+                buttonNext.isEnabled = true
+            }
+            else {
+                button1.isClickable = false
+                button2.isClickable = false
+                button3.setBackgroundColor(Color.RED)
+                button4.isClickable = false
+                buttonNext.isEnabled = true
+            }
+        }
+        button4.setOnClickListener {
+            if (questionList[currentPosition].answer4.trueorfalse=="true"){
+                button1.isClickable = false
+                button2.isClickable = false
+                button3.isClickable = false
+                button4.setBackgroundColor(Color.GREEN)
+                score+=1
+                buttonNext.isEnabled = true
+            }
+            else {
+                button1.isClickable = false
+                button2.isClickable = false
+                button3.isClickable = false
+                button4.setBackgroundColor(Color.RED)
+                buttonNext.isEnabled = true
+            }
+        }
+    }
 }
