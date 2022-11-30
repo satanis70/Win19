@@ -8,6 +8,7 @@ import android.util.Log
 import com.example.win19.databinding.ActivityMainBinding
 import com.example.win19.model.Question
 import com.example.win19.services.RetrofitService
+import com.onesignal.OneSignal
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,18 +25,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
+        OneSignal.initWithContext(this)
+        OneSignal.setAppId("714b9f14-381d-4fc4-a93c-28d480557381")
         getData()
         binding.buttonNext.setOnClickListener {
+            binding.buttonNext.isEnabled = false
             binding.buttonAnswer1.setBackgroundResource(R.color.buttons)
             binding.buttonAnswer2.setBackgroundResource(R.color.buttons)
             binding.buttonAnswer3.setBackgroundResource(R.color.buttons)
             binding.buttonAnswer4.setBackgroundResource(R.color.buttons)
             getData()
-            if (currentPosition==questionList.size){
-                val intent = Intent(this, ScoreActivity::class.java)
-                intent.putExtra("score", score)
-                startActivity(intent)
-            }
         }
     }
 
@@ -53,6 +53,12 @@ class MainActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.Main).launch {
                     Log.d("LIST", questionList.toString())
                     binding.textViewScore.text = "${currentPosition+1}/${questionList.size}"
+                    if (currentPosition==questionList.size){
+                        val intent = Intent(this@MainActivity, ScoreActivity::class.java)
+                        intent.putExtra("score", score)
+                        intent.putExtra("all", questionList.size)
+                        startActivity(intent)
+                    }
                     showNextQuiz(currentPosition)
                     currentPosition+=1
                 }
